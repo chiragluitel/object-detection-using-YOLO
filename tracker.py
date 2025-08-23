@@ -24,22 +24,28 @@ class Tracker:
         #Likely Update Tracks does: Looks at previously sent detection, freshly stored detection, and UPDATES the box while keeping the tracking id the same, 
         #which is essentially, tracking each box!
         tracks = self.object_tracker.update_tracks(detections, frame=frame) 
-
+        
         print(f"\n--------------------Tracks from DeepSort.update_Tracks(detections, frame) function: --------------------\n")
-
-        tracking_ids = []
-        boxes =[]
+        #Store tuple: IDs, boxes and Labels
+        tracking_results = []
         #For EACH track (meaning EACH object)
-        for track in tracks:
-            #Skip non confirmed
+        for det, track in zip(detections, tracks):
             if not track.is_confirmed():
                 continue
-            tracking_ids.append(track.track_id) #grab tracking ID from THIS track and append to tracking_ids array
-
-            ltrb = track.to_ltrb() #ltrb is left top right bottom
-            boxes.append(ltrb)
+            track_id = track.track_id
+            class_number = det[1]
+            label = self.get_label_from_detection(class_number)
+            ltrb = track.to_ltrb()
+            tracking_results.append((track_id, ltrb, label))
         #In this ONE Frame, how many boxes, how many tracking_ids? Could be multiple. 
         #So, in this ONE Frame, return all the boxes and their relative tracking ids.
             
         #20. Returns Tracking IDs and Boxes Coordinates that now you can use to draw boxes and list tracking_ids
-        return tracking_ids, boxes
+        return tracking_results
+    
+    def get_label_from_detection(self, class_number):
+    # Map class_number to class name
+        class_names = ["person", "cell phone", "bottle", "cup", "book"]  # Add more classes if needed
+        if class_number < len(class_names):
+            return class_names[class_number]
+        return "Unknown"
